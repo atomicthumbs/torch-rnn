@@ -64,7 +64,7 @@ function LM:__init(kwargs)
   else
     local rnn
     if self.model_type == 'rnn' then
-       rnn = cudnn.RNNTanh(prev_dim, H, self.num_layers, true)
+       rnn = cudnn.RNNTanh(D, H, self.num_layers, true)
     elseif self.model_type == 'lstm' then
        rnn = cudnn.LSTM(D, H, self.num_layers, true)
     end
