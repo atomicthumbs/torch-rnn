@@ -1,7 +1,7 @@
 require 'torch'
 require 'nn'
 require 'optim'
-
+require 'cudnn'
 require 'LanguageModel'
 require 'util.DataLoader'
 
@@ -46,6 +46,7 @@ cmd:option('-memory_benchmark', 0)
 -- Backend options
 cmd:option('-gpu', 0)
 cmd:option('-gpu_backend', 'cuda')
+cmd:option('-cudnn', 0)
 
 local opt = cmd:parse(arg)
 
