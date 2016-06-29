@@ -79,6 +79,7 @@ use -cudnn 1 command line option to enable use of cudnn LSTM implementation. You
 ```bash
 luarocks install cudnn
 ```
+Thanks to Jeremy Appleyard for implementing this. 
 
 ## OpenCL support (Optional)
 To enable GPU acceleration with OpenCL, you'll need to install the following Lua packages:
