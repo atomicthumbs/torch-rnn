@@ -65,11 +65,10 @@ function LM:__init(kwargs)
     local rnn
     local batchFirst = true
     if self.model_type == 'rnn' then
-       rnn = cudnn.RNNTanh(D, H, self.num_layers, batchFirst)
+       rnn = cudnn.RNNTanh(D, H, self.num_layers, batchFirst, self.dropout, true)
     elseif self.model_type == 'lstm' then
-       rnn = cudnn.LSTM(D, H, self.num_layers, batchFirst)
+       rnn = cudnn.LSTM(D, H, self.num_layers, batchFirst, self.dropout, true)
     end
-    rnn.dropout = self.dropout
     rnn:resetDropoutDescriptor()
     if not batchFirst then
        self.net:add(nn.Transpose({1, 2}))
