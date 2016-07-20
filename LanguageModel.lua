@@ -85,7 +85,7 @@ function LM:__init(kwargs)
     if self.dropout > 0 then
        self.net:add(nn.Dropout(self.dropout))
     end
-
+    table.insert(self.rnns, rnn)
   end 
   -- After all the RNNs run, we will have a tensor of shape (N, T, H);
   -- we want to apply a 1D temporal convolution to predict scores for each
