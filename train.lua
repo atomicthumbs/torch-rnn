@@ -76,6 +76,7 @@ if opt.resume_from ~= '' then
 	opt.memory_benchmark = resume.memory_benchmark
 	opt.gpu = resume.gpu
 	opt.gpu_backend = resume.gpu_backend
+	opt.cudnn = resume.cudnn
 end
 
 -- Set up GPU stuff
@@ -287,6 +288,7 @@ for i = start_i + 1, num_iterations do
 		memory_benchmark = opt.memory_benchmark,
 		gpu = opt.gpu,
 		gpu_backend = opt.gpu_backend,
+		cudnn = opt.cudnn
 	}
 	filename = string.format('%s_%d_resume.json', opt.checkpoint_name, i)
     paths.mkdir(paths.dirname(filename))
