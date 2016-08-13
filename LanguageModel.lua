@@ -3,7 +3,7 @@ require 'nn'
 
 require 'VanillaRNN'
 require 'LSTM'
-
+require 'cudnn'
 local utils = require 'util.utils'
 
 
@@ -25,6 +25,7 @@ function LM:__init(kwargs)
   self.num_layers = utils.get_kwarg(kwargs, 'num_layers')
   self.dropout = utils.get_kwarg(kwargs, 'dropout')
   self.batchnorm = utils.get_kwarg(kwargs, 'batchnorm')
+  local usecudnn = utils.get_kwarg(kwargs, 'cudnn')
 
   local V, D, H = self.vocab_size, self.wordvec_dim, self.rnn_size
 
@@ -34,6 +35,7 @@ function LM:__init(kwargs)
   self.bn_view_out = {}
 
   self.net:add(nn.LookupTable(V, D))
+  if (usecudnn == 0) then
   for i = 1, self.num_layers do
     local prev_dim = H
     if i == 1 then prev_dim = D end
@@ -59,7 +61,32 @@ function LM:__init(kwargs)
       self.net:add(nn.Dropout(self.dropout))
     end
   end
-
+  else
+    local rnn
+    local batchFirst = true
+    if self.model_type == 'rnn' then
+       rnn = cudnn.RNNTanh(D, H, self.num_layers, batchFirst, self.dropout, true)
+    elseif self.model_type == 'lstm' then
+       rnn = cudnn.LSTM(D, H, self.num_layers, batchFirst, self.dropout, true)
+    end
+    rnn:resetDropoutDescriptor()
+    if not batchFirst then
+       self.net:add(nn.Transpose({1, 2}))
+--contiguous not needed after transpose, as transpose makes outputs contig
+    else 
+       self.net:add(nn.Contiguous())
+    end
+    self.net:add(rnn)              
+    if not batchFirst then
+      self.net:add(nn.Transpose({1, 2}))
+    else 
+      self.net:add(nn.Contiguous())
+    end 
+    if self.dropout > 0 then
+       self.net:add(nn.Dropout(self.dropout))
+    end
+    table.insert(self.rnns, rnn)
+  end 
   -- After all the RNNs run, we will have a tensor of shape (N, T, H);
   -- we want to apply a 1D temporal convolution to predict scores for each
   -- vocab element, giving a tensor of shape (N, T, V). Unfortunately
