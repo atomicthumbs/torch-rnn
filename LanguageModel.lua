@@ -26,6 +26,9 @@ function LM:__init(kwargs)
   self.dropout = utils.get_kwarg(kwargs, 'dropout')
   self.batchnorm = utils.get_kwarg(kwargs, 'batchnorm')
   local usecudnn = utils.get_kwarg(kwargs, 'cudnn')
+  if utils.get_kwarg(kwargs,'cudnn_fastest') then
+	  cudnn.fastest = true
+  end
 
   local V, D, H = self.vocab_size, self.wordvec_dim, self.rnn_size
 

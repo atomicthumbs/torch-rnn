@@ -47,6 +47,7 @@ cmd:option('-memory_benchmark', 0)
 cmd:option('-gpu', 0)
 cmd:option('-gpu_backend', 'cuda')
 cmd:option('-cudnn', 0)
+cmd:option('-cudnn_fastest',0)
 
 local opt = cmd:parse(arg)
 
@@ -77,6 +78,7 @@ if opt.resume_from ~= '' then
 	opt.gpu = resume.gpu
 	opt.gpu_backend = resume.gpu_backend
 	opt.cudnn = resume.cudnn
+	opt.cudnn_fastest = resume.cudnn_fastest
 end
 
 -- Set up GPU stuff
@@ -288,7 +290,8 @@ for i = start_i + 1, num_iterations do
 		memory_benchmark = opt.memory_benchmark,
 		gpu = opt.gpu,
 		gpu_backend = opt.gpu_backend,
-		cudnn = opt.cudnn
+		cudnn = opt.cudnn,
+		cudnn_fastest = opt.cudnn_fastest
 	}
 	filename = string.format('%s_%d_resume.json', opt.checkpoint_name, i)
     paths.mkdir(paths.dirname(filename))
