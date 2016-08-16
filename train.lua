@@ -36,7 +36,7 @@ cmd:option('-lr_decay_factor', 0.5)
 
 -- Output options
 cmd:option('-print_every', 1)
-cmd:option('-checkpoint_every', 1000)
+cmd:option('-checkpoint_every', '1000')
 cmd:option('-checkpoint_name', 'cv/checkpoint')
 
 -- Benchmark options
@@ -75,6 +75,16 @@ if opt.resume_from ~= '' then
 	opt.memory_benchmark = resume.memory_benchmark
 	opt.gpu = resume.gpu
 	opt.gpu_backend = resume.gpu_backend
+end
+
+local epoch_checkpoint = false
+local checkpoint_every = 1000
+
+if opt.checkpoint_every:sub(-1,-1):upper() == 'E' then
+	epoch_checkpoint = true
+	checkpoint_every = tonumber(opt.checkpoint_every:sub(1,-2))
+else
+	checkpoint_every = tonumber(opt.checkpoint_every)
 end
 
 -- Set up GPU stuff
@@ -222,8 +232,22 @@ for i = start_i + 1, num_iterations do
   end
 
   -- Maybe save a checkpoint
-  local check_every = opt.checkpoint_every
-  if (check_every > 0 and i % check_every == 0) or i == num_iterations then
+  local check_every = checkpoint_every
+  local do_checkpoint = false
+  if check_every > 0 then
+    if epoch_checkpoint then
+      if check_every % (1/num_train) == 0 then
+	    do_checkpoint = ((i/num_train) % check_every == 0)
+	  else
+	    do_checkpoint = ((i/num_train) % check_every < 1/num_train)
+      end
+    else
+      do_checkpoint = (i % check_every == 0)
+    end
+  end
+	
+  
+  if do_checkpoint or i == num_iterations then
     -- Evaluate loss on the validation set. Note that we reset the state of
     -- the model; this might happen in the middle of an epoch, but that
     -- shouldn't cause too much trouble.
