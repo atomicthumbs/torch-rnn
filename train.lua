@@ -36,7 +36,7 @@ cmd:option('-lr_decay_factor', 0.5)
 
 -- Output options
 cmd:option('-print_every', 1)
-cmd:option('-checkpoint_every', 1000)
+cmd:option('-checkpoint_every', '1000')
 cmd:option('-checkpoint_name', 'cv/checkpoint')
 
 -- Benchmark options
@@ -66,7 +66,7 @@ if opt.resume_from ~= '' then
 	opt.dropout = resume.dropout
 	opt.batchnorm = resume.batchnorm
 	opt.max_epochs = resume.max_epochs
-	opt.learning_rate = resume.learningRate
+	opt.learning_rate = resume.learning_rate
 	opt.grad_clip = resume.grad_clip
 	opt.lr_decay_every = resume.lr_decay_every
 	opt.lr_decay_factor = resume.lr_decay_factor
@@ -79,6 +79,16 @@ if opt.resume_from ~= '' then
 	opt.gpu_backend = resume.gpu_backend
 	opt.cudnn = resume.cudnn
 	opt.cudnn_fastest = resume.cudnn_fastest
+end
+
+local epoch_checkpoint = false
+local checkpoint_every = 1000
+
+if opt.checkpoint_every:sub(-1,-1):upper() == 'E' then
+	epoch_checkpoint = true
+	checkpoint_every = tonumber(opt.checkpoint_every:sub(1,-2))
+else
+	checkpoint_every = tonumber(opt.checkpoint_every)
 end
 
 -- Set up GPU stuff
@@ -226,8 +236,22 @@ for i = start_i + 1, num_iterations do
   end
 
   -- Maybe save a checkpoint
-  local check_every = opt.checkpoint_every
-  if (check_every > 0 and i % check_every == 0) or i == num_iterations then
+  local check_every = checkpoint_every
+  local do_checkpoint = false
+  if check_every > 0 then
+    if epoch_checkpoint then
+      if check_every % (1/num_train) == 0 then
+	    do_checkpoint = ((i/num_train) % check_every == 0)
+	  else
+	    do_checkpoint = ((i/num_train) % check_every < 1/num_train)
+      end
+    else
+      do_checkpoint = (i % check_every == 0)
+    end
+  end
+	
+  
+  if do_checkpoint or i == num_iterations then
     -- Evaluate loss on the validation set. Note that we reset the state of
     -- the model; this might happen in the middle of an epoch, but that
     -- shouldn't cause too much trouble.
@@ -280,6 +304,7 @@ for i = start_i + 1, num_iterations do
 		batchnorm = opt.batchnorm,
 		max_epochs = opt.max_epochs,
 		learning_rate = optim_config.learningRate,
+		initial_learning_rate = opt.learning_rate,
 		grad_clip = opt.grad_clip,
 		lr_decay_every = opt.lr_decay_every,
 		lr_decay_factor = opt.lr_decay_factor,
