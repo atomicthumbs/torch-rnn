@@ -64,7 +64,7 @@ if opt.resume_from ~= '' then
 	opt.dropout = resume.dropout
 	opt.batchnorm = resume.batchnorm
 	opt.max_epochs = resume.max_epochs
-	opt.learning_rate = resume.learningRate
+	opt.learning_rate = resume.learning_rate
 	opt.grad_clip = resume.grad_clip
 	opt.lr_decay_every = resume.lr_decay_every
 	opt.lr_decay_factor = resume.lr_decay_factor
@@ -300,6 +300,7 @@ for i = start_i + 1, num_iterations do
 		batchnorm = opt.batchnorm,
 		max_epochs = opt.max_epochs,
 		learning_rate = optim_config.learningRate,
+		initial_learning_rate = opt.learning_rate,
 		grad_clip = opt.grad_clip,
 		lr_decay_every = opt.lr_decay_every,
 		lr_decay_factor = opt.lr_decay_factor,
@@ -309,7 +310,7 @@ for i = start_i + 1, num_iterations do
 		speed_benchmark = opt.speed_benchmark,
 		memory_benchmark = opt.memory_benchmark,
 		gpu = opt.gpu,
-		gpu_backend = opt.gpu_backend,
+		gpu_backend = opt.gpu_backend
 	}
 	filename = string.format('%s_%d_resume.json', opt.checkpoint_name, i)
     paths.mkdir(paths.dirname(filename))
