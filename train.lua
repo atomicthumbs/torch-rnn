@@ -49,9 +49,19 @@ cmd:option('-gpu_backend', 'cuda')
 cmd:option('-cudnn', 0)
 cmd:option('-cudnn_fastest',0)
 
+cmd:option('-checkpoint_log',1)
+
 local opt = cmd:parse(arg)
 
 if opt.resume_from ~= '' then
+	
+	if opt.resume_from:find('_resume') == nil then
+		opt.resume_from = opt.resume_from .. '_resume.json'
+	end
+	if opt.resume_from:find('.json') == nil then
+		opt.resume_from = opt.resume_from .. '.json'
+	end
+	
 	local resume = utils.read_json(opt.resume_from)
 	opt.init_from = resume.init_from
 	opt.reset_iterations = resume.reset_iterations
@@ -79,6 +89,9 @@ if opt.resume_from ~= '' then
 	opt.gpu_backend = resume.gpu_backend
 	opt.cudnn = resume.cudnn
 	opt.cudnn_fastest = resume.cudnn_fastest
+	if resume.checkpoint_log ~= nil then
+		opt.checkpoint_log = resume.checkpoint_log
+	end
 end
 
 local epoch_checkpoint = false
@@ -128,6 +141,9 @@ opt_clone.idx_to_token = idx_to_token
 local model = nil
 local start_i = 0
 if opt.init_from ~= '' then
+	if opt.init_from:find('.t7') == nil then
+		opt.init_from = opt.init_from .. '.t7'
+	end
   print('Initializing from ', opt.init_from)
   local checkpoint = torch.load(opt.init_from)
   model = checkpoint.model:type(dtype)
@@ -275,7 +291,6 @@ for i = start_i + 1, num_iterations do
 
     -- First save a JSON checkpoint, excluding the model
     local checkpoint = {
-      opt = opt,
       train_loss_history = train_loss_history,
       val_loss_history = val_loss_history,
       val_loss_history_it = val_loss_history_it,
@@ -283,7 +298,7 @@ for i = start_i + 1, num_iterations do
       memory_usage = memory_usage,
       i = i
     }
-    local filename = string.format('%s_%d.json', opt.checkpoint_name, i)
+    local filename = string.format('%s_%d_log.json', opt.checkpoint_name, i)
     -- Make sure the output directory exists before we try to write it
     paths.mkdir(paths.dirname(filename))
     utils.write_json(filename, checkpoint)
