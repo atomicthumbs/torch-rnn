@@ -15,6 +15,9 @@ cmd:option('-gpu_backend', 'cuda')
 cmd:option('-verbose', 0)
 local opt = cmd:parse(arg)
 
+if opt.checkpoint:find('.t7') == nil then
+	opt.checkpoint = opt.checkpoint .. '.t7'
+end
 
 local checkpoint = torch.load(opt.checkpoint)
 local model = checkpoint.model
