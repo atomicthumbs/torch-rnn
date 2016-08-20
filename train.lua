@@ -284,8 +284,7 @@ for i = start_i + 1, num_iterations do
     table.insert(val_loss_history_it, i)
     model:resetStates()
     model:training()
-
-    -- First save a JSON checkpoint, excluding the model
+	
     local checkpoint = {
       train_loss_history = train_loss_history,
       val_loss_history = val_loss_history,
@@ -294,10 +293,14 @@ for i = start_i + 1, num_iterations do
       memory_usage = memory_usage,
       i = i
     }
-    local filename = string.format('%s_%d_log.json', opt.checkpoint_name, i)
-    -- Make sure the output directory exists before we try to write it
-    paths.mkdir(paths.dirname(filename))
-    utils.write_json(filename, checkpoint)
+	
+    if opt.checkpoint_log ~= 0 then
+      -- First save a JSON checkpoint, excluding the model
+      local filename = string.format('%s_%d_log.json', opt.checkpoint_name, i)
+      -- Make sure the output directory exists before we try to write it
+      paths.mkdir(paths.dirname(filename))
+      utils.write_json(filename, checkpoint)
+    end
 	
 	-- Save a resume point with all options needed to restart training
 	local resume = {
@@ -325,7 +328,8 @@ for i = start_i + 1, num_iterations do
 		speed_benchmark = opt.speed_benchmark,
 		memory_benchmark = opt.memory_benchmark,
 		gpu = opt.gpu,
-		gpu_backend = opt.gpu_backend
+		gpu_backend = opt.gpu_backend,
+		checkpoint_log = opt.checkpoint_log
 	}
 	filename = string.format('%s_%d_resume.json', opt.checkpoint_name, i)
     paths.mkdir(paths.dirname(filename))
