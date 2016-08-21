@@ -46,9 +46,9 @@ The training script `train.lua` accepts the following command-line flags:
 - `-lr_decay_factor`: How much to decay the learning rate. After every `lr_decay_every` epochs, the learning rate will be multiplied by the `lr_decay_factor`; default is 0.5.
 
 **Output options**:
-- `-print_every`: How often to print status message, in iterations. Default is 1.
+- `-print_every`: How often to print status message, in iterations. Follow a number with 'e' to specify in epochs rather than batches, e.g. `-print_every 0.1e` Default is 1000.
 - `-checkpoint_name`: Base filename for saving checkpoints; default is `cv/checkpoint`. This will create checkpoints named - `cv/checkpoint_1000.t7`, `cv/checkpoint_1000_log.json`,`cv/checkpoint_1000_resume.json`, etc.
-- `-checkpoint_every`: How often to save intermediate checkpoints. Default is 1000; set to 0 to disable intermediate checkpointing. Follow a number with 'e' to specify in epochs rather than batches, e.g. `checkpoint_every` Note that we always save a checkpoint on the final iteration of training.
+- `-checkpoint_every`: How often to save intermediate checkpoints. Default is 1000; set to 0 to disable intermediate checkpointing. Follow a number with 'e' to specify in epochs rather than batches, e.g. `-checkpoint_every 1e` Note that we always save a checkpoint on the final iteration of training.
 - `-checkpoint_log`: Set to 0 to disable log checkpoints, which contain loss function history for every minibatch and epoch.
 
 **Benchmark options**:

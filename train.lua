@@ -35,7 +35,7 @@ cmd:option('-lr_decay_every', 5)
 cmd:option('-lr_decay_factor', 0.5)
 
 -- Output options
-cmd:option('-print_every', 1)
+cmd:option('-print_every', '1')
 cmd:option('-checkpoint_every', '1000')
 cmd:option('-checkpoint_name', 'cv/checkpoint')
 
@@ -96,12 +96,21 @@ end
 
 local epoch_checkpoint = false
 local checkpoint_every = 1000
+local epoch_print = false
+local print_every = 1
 
 if opt.checkpoint_every:sub(-1,-1):upper() == 'E' then
 	epoch_checkpoint = true
 	checkpoint_every = tonumber(opt.checkpoint_every:sub(1,-2))
 else
 	checkpoint_every = tonumber(opt.checkpoint_every)
+end
+
+if opt.print_every:sub(-1,-1):upper() == 'E' then
+	epoch_print = true
+	print_every = tonumber(opt.print_every:sub(1,-2))
+else
+	print_every = tonumber(opt.print_every)
 end
 
 -- Set up GPU stuff
@@ -244,8 +253,21 @@ for i = start_i + 1, num_iterations do
   -- Note that adam returns a singleton array of losses
   local _, loss = optim.adam(f, params, optim_config)
   table.insert(train_loss_history, loss[1])
-  if opt.print_every > 0 and i % opt.print_every == 0 then
-    local float_epoch = i / num_train + 1
+  local do_print = false
+  if print_every > 0 then
+    if epoch_print then
+      if print_every % (1/num_train) == 0 then
+	    do_print = ((i/num_train) % print_every == 0)
+	  else
+	    do_print = ((i/num_train) % print_every < 1/num_train)
+      end
+    else
+      do_print = (i % print_every == 0)
+    end
+  end
+  
+  if do_print then
+    local float_epoch = i / num_train
     local msg = 'Epoch %.2f / %d, i = %d / %d, loss = %f'
     local args = {msg, float_epoch, opt.max_epochs, i, num_iterations, loss[1]}
     print(string.format(unpack(args)))
