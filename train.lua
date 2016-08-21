@@ -285,25 +285,24 @@ for i = start_i + 1, num_iterations do
     model:resetStates()
     model:training()
 	
-    local checkpoint = {
-      train_loss_history = train_loss_history,
-      val_loss_history = val_loss_history,
-      val_loss_history_it = val_loss_history_it,
-      forward_backward_times = forward_backward_times,
-      memory_usage = memory_usage,
-      i = i
-    }
-	
     if opt.checkpoint_log ~= 0 then
       -- First save a JSON checkpoint, excluding the model
+      local log_checkpoint = {
+        train_loss_history = train_loss_history,
+        val_loss_history = val_loss_history,
+        val_loss_history_it = val_loss_history_it,
+        forward_backward_times = forward_backward_times,
+        memory_usage = memory_usage,
+        i = i
+      }
       local filename = string.format('%s_%d_log.json', opt.checkpoint_name, i)
       -- Make sure the output directory exists before we try to write it
       paths.mkdir(paths.dirname(filename))
-      utils.write_json(filename, checkpoint)
+      utils.write_json(filename, log_checkpoint)
     end
 	
 	-- Save a resume point with all options needed to restart training
-	local resume = {
+	local resume_checkpoint = {
 		init_from = string.format('%s_%d.t7',opt.checkpoint_name, i),
 		reset_iterations = 0,
 		input_h5 = opt.input_h5,
@@ -333,16 +332,19 @@ for i = start_i + 1, num_iterations do
 	}
 	filename = string.format('%s_%d_resume.json', opt.checkpoint_name, i)
     paths.mkdir(paths.dirname(filename))
-    utils.write_json(filename, resume)
+    utils.write_json(filename, resume_checkpoint)
 
     -- Now save a torch checkpoint with the model
     -- Cast the model to float before saving so it can be used on CPU
     model:clearState()
     model:float()
-    checkpoint.model = model
+    local model_checkpoint = {
+	  model = model
+      i = i
+    }
     local filename = string.format('%s_%d.t7', opt.checkpoint_name, i)
     paths.mkdir(paths.dirname(filename))
-    torch.save(filename, checkpoint)
+    torch.save(filename, model_checkpoint)
     model:type(dtype)
     params, grad_params = model:getParameters()
     collectgarbage()
