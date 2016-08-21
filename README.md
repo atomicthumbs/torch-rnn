@@ -127,6 +127,8 @@ th train.lua -input_h5 my_data.h5 -input_json my_data.json
 This will read the data stored in `my_data.h5` and `my_data.json`, run for a while, and save checkpoints to files with 
 names like `cv/checkpoint_1000.t7`.
 
+Checkpoints also allow you to resume training from the last one saved if training is interrupted. Use the flag `-resume_from` (e.g. `-resume_from cv/checkpoint_1000`) to resume from any checkpoint preserving the model and training state.
+
 You can change the RNN model type, hidden state size, and number of RNN layers like this:
 
 ```bash

@@ -29,7 +29,8 @@ The training script `train.lua` accepts the following command-line flags:
 - `-seq_length`: Number of timesteps for which the recurrent network is unrolled for backpropagation through time.
 
 **Model options**:
-- `-init_from`: Path to a checkpoint file from a previous run of `train.lua`. Use this to continue training from an existing checkpoint; if this flag is passed then the other flags in this section will be ignored and the architecture from the existing checkpoint will be used instead.
+- `-resume_from`: Path to a resume checkpoint from a previous run of `train.lua`. Use this to pick up training with the EXACT same options and state from a previous training run that was interrupted. If this flag is passed then ALL OTHER options will be ignored.
+- `-init_from`: Path to a checkpoint file from a previous run of `train.lua`. Use this to continue training from an existing checkpoint; if this flag is passed then ONLY the other flags in THIS SECTION will be ignored and the architecture from the existing checkpoint will be used instead.
 - `-reset_iterations`: Set this to 0 to restore the iteration counter of a previous run. Default is 1 (do not restore iteration counter). Only applicable if `-init_from` option is used.
 - `-model_type`: The type of recurrent network to use; either `lstm` (default) or `rnn`. `lstm` is slower but better.
 - `-wordvec_size`: Dimension of learned word vector embeddings; default is 64. You probably won't need to change this.
@@ -46,8 +47,9 @@ The training script `train.lua` accepts the following command-line flags:
 
 **Output options**:
 - `-print_every`: How often to print status message, in iterations. Default is 1.
-- `-checkpoint_name`: Base filename for saving checkpoints; default is `cv/checkpoint`. This will create checkpoints named - `cv/checkpoint_1000.t7`, `cv/checkpoint_1000.json`, etc.
-- `-checkpoint_every`: How often to save intermediate checkpoints. Default is 1000; set to 0 to disable intermediate checkpointing. Note that we always save a checkpoint on the final iteration of training.
+- `-checkpoint_name`: Base filename for saving checkpoints; default is `cv/checkpoint`. This will create checkpoints named - `cv/checkpoint_1000.t7`, `cv/checkpoint_1000_log.json`,`cv/checkpoint_1000_resume.json`, etc.
+- `-checkpoint_every`: How often to save intermediate checkpoints. Default is 1000; set to 0 to disable intermediate checkpointing. Follow a number with 'e' to specify in epochs rather than batches, e.g. `checkpoint_every` Note that we always save a checkpoint on the final iteration of training.
+- `-checkpoint_log`: Set to 0 to disable log checkpoints, which contain loss function history for every minibatch and epoch.
 
 **Benchmark options**:
 - `-speed_benchmark`: Set this to 1 to test the speed of the model at every iteration. This is disabled by default because it requires synchronizing the GPU at every iteration, which incurs a performance overhead. Speed benchmarking results will be printed and also stored in saved checkpoints.
