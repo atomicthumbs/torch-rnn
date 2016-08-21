@@ -339,7 +339,7 @@ for i = start_i + 1, num_iterations do
     model:clearState()
     model:float()
     local model_checkpoint = {
-	  model = model
+	  model = model,
       i = i
     }
     local filename = string.format('%s_%d.t7', opt.checkpoint_name, i)
