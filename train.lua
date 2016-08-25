@@ -231,6 +231,13 @@ local optim_config = {learningRate = opt.learning_rate}
 local num_train = loader.split_sizes['train']
 local num_iterations = opt.max_epochs * num_train
 model:training()
+local train_losses = 0
+local train_count = 0
+
+-- these are only used if printing or checkpointing every epoch
+local last_print = math.floor((start_i/num_train)/print_every)
+local last_check = math.floor((start_i/num_train)/checkpoint_every)
+
 for i = start_i + 1, num_iterations do
   local epoch = math.floor(i / num_train) + 1
 
@@ -244,28 +251,34 @@ for i = start_i + 1, num_iterations do
       optim_config = {learningRate = old_lr * opt.lr_decay_factor}
     end
   end
+  
+  local float_epoch = i / num_train
 
   -- Take a gradient step and maybe print
   -- Note that adam returns a singleton array of losses
   local _, loss = optim.adam(f, params, optim_config)
   table.insert(train_loss_history, loss[1])
+  train_losses = train_losses + loss[1]
+  train_count = train_count + 1
   local do_print = false
   if print_every > 0 then
     if epoch_print then
-      if print_every % (1/num_train) == 0 then
-	    do_print = ((i/num_train) % print_every == 0)
-	  else
-	    do_print = ((i/num_train) % print_every < 1/num_train)
-      end
+		if float_epoch/print_every - last_print >= 1.0 then
+			do_print = true
+			last_print = last_print + 1
+		end
     else
       do_print = (i % print_every == 0)
     end
   end
   
   if do_print then
-    local float_epoch = i / num_train
-    local msg = 'Epoch %.2f / %d, i = %d / %d, loss = %f'
-    local args = {msg, float_epoch, opt.max_epochs, i, num_iterations, loss[1]}
+    
+    local msg = 'Epoch %.2f / %d, i = %d / %d, mean loss = %f'
+	local mean_loss = train_losses / train_count
+	train_losses = 0
+	train_count = 0
+    local args = {msg, float_epoch, opt.max_epochs, i, num_iterations, mean_loss}
     print(string.format(unpack(args)))
   end
 
@@ -274,11 +287,10 @@ for i = start_i + 1, num_iterations do
   local do_checkpoint = false
   if check_every > 0 then
     if epoch_checkpoint then
-      if check_every % (1/num_train) == 0 then
-	    do_checkpoint = ((i/num_train) % check_every == 0)
-	  else
-	    do_checkpoint = ((i/num_train) % check_every < 1/num_train)
-      end
+		if float_epoch/check_every - last_check >= 1.0 then
+			do_checkpoint = true
+			last_check = last_check + 1
+		end
     else
       do_checkpoint = (i % check_every == 0)
     end
@@ -291,6 +303,14 @@ for i = start_i + 1, num_iterations do
     -- shouldn't cause too much trouble.
     model:evaluate()
     model:resetStates()
+	
+	local checkpoint_number
+	if epoch_checkpoint then
+		checkpoint_number = string.format('%ge',checkpoint_every * last_check)
+	else
+		checkpoint_number = string.format('%d',i)
+	end
+	
     local num_val = loader.split_sizes['val']
     local val_loss = 0
     for j = 1, num_val do
@@ -301,6 +321,7 @@ for i = start_i + 1, num_iterations do
       val_loss = val_loss + crit:forward(scores, yv)
     end
     val_loss = val_loss / num_val
+	print(string.format('Saving Checkpoint %s_%s',opt.checkpoint_name, checkpoint_number))
     print('val_loss = ', val_loss)
     table.insert(val_loss_history, val_loss)
     table.insert(val_loss_history_it, i)
@@ -317,15 +338,16 @@ for i = start_i + 1, num_iterations do
         memory_usage = memory_usage,
         i = i
       }
-      local filename = string.format('%s_%d_log.json', opt.checkpoint_name, i)
+      local filename = string.format('%s_%s_log.json', opt.checkpoint_name, checkpoint_number)
       -- Make sure the output directory exists before we try to write it
       paths.mkdir(paths.dirname(filename))
       utils.write_json(filename, log_checkpoint)
     end
 	
+	local resume_filename = string.format('%s_%s.t7', opt.checkpoint_name, checkpoint_number)
 	-- Save a resume point with all options needed to restart training
 	local resume_checkpoint = {
-		init_from = string.format('%s_%d.t7',opt.checkpoint_name, i),
+		init_from = resume_filename,
 		reset_iterations = 0,
 		input_h5 = opt.input_h5,
 		input_json = opt.input_json,
@@ -352,7 +374,7 @@ for i = start_i + 1, num_iterations do
 		gpu_backend = opt.gpu_backend,
 		checkpoint_log = opt.checkpoint_log
 	}
-	filename = string.format('%s_%d_resume.json', opt.checkpoint_name, i)
+	local filename = string.format('%s_%s_resume.json', opt.checkpoint_name, checkpoint_number)
     paths.mkdir(paths.dirname(filename))
     utils.write_json(filename, resume_checkpoint)
 
@@ -364,7 +386,7 @@ for i = start_i + 1, num_iterations do
 	  model = model,
       i = i
     }
-    local filename = string.format('%s_%d.t7', opt.checkpoint_name, i)
+    filename = string.format('%s_%s.t7', opt.checkpoint_name, checkpoint_number)
     paths.mkdir(paths.dirname(filename))
     torch.save(filename, model_checkpoint)
     model:type(dtype)
