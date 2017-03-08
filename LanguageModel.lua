@@ -135,13 +135,13 @@ end
 
 function LM:decode_string(encoded)
   assert(torch.isTensor(encoded) and encoded:dim() == 1)
-  local s = ''
+  local s = {}
   for i = 1, encoded:size(1) do
     local idx = encoded[i]
     local token = self.idx_to_token[idx]
-    s = s .. token
+    table.insert(s, token)
   end
-  return s
+  return table.concat(s)
 end
 
 
