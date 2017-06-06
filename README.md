@@ -73,6 +73,14 @@ luarocks install cutorch
 luarocks install cunn
 ```
 
+### CUDNN support (Optional)
+use -cudnn 1 command line option to enable use of cudnn LSTM implementation. You will need to install cudnn library and cudnn torch bindings
+ 
+```bash
+luarocks install cudnn
+```
+Thanks to Jeremy Appleyard for implementing this. 
+
 ## OpenCL support (Optional)
 To enable GPU acceleration with OpenCL, you'll need to install the following Lua packages:
 - [cltorch](https://github.com/hughperkins/cltorch)

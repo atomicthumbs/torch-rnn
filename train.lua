@@ -1,7 +1,7 @@
 require 'torch'
 require 'nn'
 require 'optim'
-
+require 'cudnn'
 require 'LanguageModel'
 require 'util.DataLoader'
 
@@ -46,6 +46,8 @@ cmd:option('-memory_benchmark', 0)
 -- Backend options
 cmd:option('-gpu', 0)
 cmd:option('-gpu_backend', 'cuda')
+cmd:option('-cudnn', 0)
+cmd:option('-cudnn_fastest',0)
 
 cmd:option('-checkpoint_log',1)
 
@@ -85,6 +87,8 @@ if opt.resume_from ~= '' then
 	opt.memory_benchmark = resume.memory_benchmark
 	opt.gpu = resume.gpu
 	opt.gpu_backend = resume.gpu_backend
+	opt.cudnn = resume.cudnn
+	opt.cudnn_fastest = resume.cudnn_fastest
 	if resume.checkpoint_log ~= nil then
 		opt.checkpoint_log = resume.checkpoint_log
 	end
@@ -372,6 +376,8 @@ for i = start_i + 1, num_iterations do
 		memory_benchmark = opt.memory_benchmark,
 		gpu = opt.gpu,
 		gpu_backend = opt.gpu_backend,
+		cudnn = opt.cudnn,
+		cudnn_fastest = opt.cudnn_fastest,
 		checkpoint_log = opt.checkpoint_log
 	}
 	local filename = string.format('%s_%s_resume.json', opt.checkpoint_name, checkpoint_number)
