@@ -71,7 +71,7 @@ The sampling script `sample.lua` accepts the following command-line flags:
 - `-gpu_backend`: The GPU backend to use; either `cuda` or `opencl`. Default is `cuda`.
 - `-verbose`: By default just the sampled text is printed to the console. Set this to 1 to also print some diagnostic information.
 
-#Tokenizing
+# Tokenizing
 The tokenizing script `scripts/tokenizeWords.py` accepts the following command-line flags:
 - `--input_str`: The string to tokenize as a quoted block, ex. `--input "lorem ipsum"`
 - `--input_txt`: Path to the text file to be used for training. Default is the `tiny-shakespeare.txt` dataset.
