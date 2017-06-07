@@ -17,7 +17,7 @@ function DataLoader:__init(kwargs)
   local f = hdf5.open(h5_file, 'r')
   splits.train = f:read('/train'):all()
   splits.val = f:read('/val'):all()
-  splits.test = f:read('/test'):all()
+  splits.test = nil --f:read('/test'):all()
 
   self.x_splits = {}
   self.y_splits = {}
@@ -45,7 +45,7 @@ function DataLoader:__init(kwargs)
     self.split_sizes[split] = vx:size(1)
   end
 
-  self.split_idxs = {train=1, val=1, test=1}
+  self.split_idxs = {train=1, val=1} --, test=1}
 end
 
 
