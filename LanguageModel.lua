@@ -5,6 +5,7 @@ require 'VanillaRNN'
 require 'LSTM'
 require 'cudnn'
 local utils = require 'util.utils'
+local utf8 = require 'lua-utf8'
 
 
 local LM, parent = torch.class('nn.LanguageModel', 'nn.Module')
@@ -152,9 +153,9 @@ end
 
 
 function LM:encode_string(s)
-  local encoded = torch.LongTensor(#s)
-  for i = 1, #s do
-    local token = s:sub(i, i)
+  local encoded = torch.LongTensor(utf8.len(s))
+  for i = 1, utf8.len(s) do
+    local token = utf8.sub(s, i, i)
     local idx = self.token_to_idx[token]
     assert(idx ~= nil, 'Got invalid idx')
     encoded[i] = idx
@@ -165,13 +166,13 @@ end
 
 function LM:decode_string(encoded)
   assert(torch.isTensor(encoded) and encoded:dim() == 1)
-  local s = ''
+  local s = {}
   for i = 1, encoded:size(1) do
     local idx = encoded[i]
     local token = self.idx_to_token[idx]
-    s = s .. token
+    table.insert(s, token)
   end
-  return s
+  return table.concat(s)
 end
 
 
@@ -193,6 +194,7 @@ function LM:sample(kwargs)
   local sample = utils.get_kwarg(kwargs, 'sample', 1)
   local temperature = utils.get_kwarg(kwargs, 'temperature', 1)
   local start_tokens = utils.get_kwarg(kwargs,'start_tokens','')
+  local stream = utils.get_kwarg(kwargs, 'stream', 0)
 
   local sampled = torch.LongTensor(1, T)
   self:resetStates()
@@ -218,6 +220,9 @@ function LM:sample(kwargs)
       print('Seeding with: "' .. start_text .. '"')
     end
     local x = self:encode_string(start_text):view(1, -1)
+    if stream == 1 then
+      io.write(start_text)
+    end
     local T0 = x:size(2)
     sampled[{{}, {1, T0}}]:copy(x)
     scores = self:forward(x)[{{}, {T0, T0}}]
@@ -242,6 +247,9 @@ function LM:sample(kwargs)
        next_char = torch.multinomial(probs, 1):view(1, 1)
     end
     sampled[{{}, {t, t}}]:copy(next_char)
+    if stream == 1 then
+      io.write(self.idx_to_token[next_char[1][1]])
+    end
     scores = self:forward(next_char)
   end
 
